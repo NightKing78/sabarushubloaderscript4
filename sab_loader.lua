@@ -1,62 +1,35 @@
--- KEY SYSTEM CONFIG
-local CorrectKey = "aru"
-local KeyVerified = false
+-- ARHAM'S AMBITIOUS ALL-IN-ONE (PRIVATE VERSION)
+-- Key: aru
 
--- 1. CREATE KEY UI
+local CorrectKey = "aru"
+
+-- 1. KEY SYSTEM UI
 local KeyGui = Instance.new("ScreenGui")
 local KeyMain = Instance.new("Frame")
-local KeyTitle = Instance.new("TextLabel")
 local KeyInput = Instance.new("TextBox")
 local KeyCheck = Instance.new("TextButton")
+local KeyTitle = Instance.new("TextLabel")
 
-KeyGui.Name = "KeySystem"
 KeyGui.Parent = game.CoreGui
+KeyMain.Size = UDim2.new(0, 300, 0, 180)
+KeyMain.Position = UDim2.new(0.5, -150, 0.5, -90)
+KeyMain.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+KeyMain.Active = true; KeyMain.Draggable = true
+Instance.new("UICorner", KeyMain).CornerRadius = UDim.new(0, 10)
 
-KeyMain.Name = "KeyMain"
-KeyMain.Parent = KeyGui
-KeyMain.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-KeyMain.Position = UDim2.new(0.5, -125, 0.5, -75)
-KeyMain.Size = UDim2.new(0, 250, 0, 150)
-KeyMain.Active = true
-KeyMain.Draggable = true
+KeyTitle.Parent = KeyMain; KeyTitle.Text = "ARHAM'S PRIVATE HUB"; KeyTitle.Size = UDim2.new(1, 0, 0, 50); KeyTitle.TextColor3 = Color3.new(1,1,1); KeyTitle.BackgroundTransparency = 1; KeyTitle.TextSize = 20; KeyTitle.Font = Enum.Font.SourceSansBold
+KeyInput.Parent = KeyMain; KeyInput.PlaceholderText = "Enter Key..."; KeyInput.Size = UDim2.new(0.8, 0, 0, 40); KeyInput.Position = UDim2.new(0.1, 0, 0.35, 0); KeyInput.BackgroundColor3 = Color3.fromRGB(40, 40, 50); KeyInput.TextColor3 = Color3.new(1,1,1)
+KeyCheck.Parent = KeyMain; KeyCheck.Text = "UNLOCK"; KeyCheck.Size = UDim2.new(0.8, 0, 0, 40); KeyCheck.Position = UDim2.new(0.1, 0, 0.65, 0); KeyCheck.BackgroundColor3 = Color3.fromRGB(0, 120, 255); KeyCheck.TextColor3 = Color3.new(1,1,1); KeyCheck.Font = Enum.Font.SourceSansBold
 
-local UICorner = Instance.new("UICorner")
-UICorner.Parent = KeyMain
-
-KeyTitle.Parent = KeyMain
-KeyTitle.Text = "ENTER KEY"
-KeyTitle.Size = UDim2.new(1, 0, 0, 40)
-KeyTitle.TextColor3 = Color3.new(1, 1, 1)
-KeyTitle.BackgroundTransparency = 1
-KeyTitle.Font = Enum.Font.SourceSansBold
-KeyTitle.TextSize = 20
-
-KeyInput.Parent = KeyMain
-KeyInput.PlaceholderText = "Type Key Here..."
-KeyInput.Position = UDim2.new(0.1, 0, 0.35, 0)
-KeyInput.Size = UDim2.new(0.8, 0, 0, 30)
-KeyInput.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-KeyInput.TextColor3 = Color3.new(1, 1, 1)
-KeyInput.Text = ""
-
-KeyCheck.Parent = KeyMain
-KeyCheck.Text = "Check Key"
-KeyCheck.Position = UDim2.new(0.1, 0, 0.65, 0)
-KeyCheck.Size = UDim2.new(0.8, 0, 0, 35)
-KeyCheck.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-KeyCheck.TextColor3 = Color3.new(1, 1, 1)
-KeyCheck.Font = Enum.Font.SourceSansBold
-
--- KEY CHECK LOGIC
+-- THE MAIN SCRIPT EXECUTION
 KeyCheck.MouseButton1Click:Connect(function()
     if KeyInput.Text == CorrectKey then
-        KeyGui:Destroy() -- Close Key Screen
+        KeyGui:Destroy()
         
-        -- ==========================================================
-        -- YOUR FULL SCRIPT STARTS HERE (GALAXY HUB)
-        -- ==========================================================
+        -- LOAD LIBRARY
         local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-
+        
+        -- GALAXY VISUALS
         local function ApplyGalaxy()
             local Lighting = game:GetService("Lighting")
             for _, v in pairs(Lighting:GetChildren()) do if v:IsA("Sky") then v:Destroy() end end
@@ -71,60 +44,85 @@ KeyCheck.MouseButton1Click:Connect(function()
 
         local Window = Library.CreateLib("ARHAM'S AMBITIOUS SAB", "DarkTheme")
 
-        -- ADMIN TAB
-        local AdminTab = Window:NewTab("Admin Panel")
-        local AdminSection = AdminTab:NewSection("Player List (Bypass Gamepass)")
-        AdminSection:NewButton("Open Admin Player List", "Block players officially", function()
-            local ScreenGui = Instance.new("ScreenGui")
-            local MainFrame = Instance.new("Frame")
-            local PlayerScroll = Instance.new("ScrollingFrame")
-            local UIListLayout = Instance.new("UIListLayout")
-            ScreenGui.Parent = game.CoreGui
-            MainFrame.Parent = ScreenGui
-            MainFrame.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
-            MainFrame.Size = UDim2.new(0, 320, 0, 400); MainFrame.Position = UDim2.new(0.5, -150, 0.5, -150)
-            MainFrame.Draggable = true; MainFrame.Active = true
-            PlayerScroll.Parent = MainFrame; PlayerScroll.Position = UDim2.new(0, 10, 0, 10); PlayerScroll.Size = UDim2.new(1, -20, 1, -20)
-            PlayerScroll.BackgroundTransparency = 1; PlayerScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-            UIListLayout.Parent = PlayerScroll; UIListLayout.Padding = UDim.new(0, 5)
+        -- CUSTOM TRADE ENGINE LOGIC
+        local function CustomFreeze()
+            local RS = game:GetService("ReplicatedStorage")
+            local TradeRemotes = {"Trade", "TradeRemote", "AcceptTrade", "UpdateTrade"}
+            game:GetService("RunService").Heartbeat:Connect(function()
+                for _, name in pairs(TradeRemotes) do
+                    local remote = RS:FindFirstChild(name, true)
+                    if remote and remote:IsA("RemoteEvent") then
+                        remote:FireServer("Accept")
+                        remote:FireServer("Lock")
+                    end
+                end
+            end)
+        end
 
-            local function UpdateList()
-                for _, v in pairs(PlayerScroll:GetChildren()) do if v:IsA("Frame") then v:Destroy() end end
+        local function CustomForceGive()
+            local RS = game:GetService("ReplicatedStorage")
+            for _, p in pairs(game.Players:GetPlayers()) do
+                if p ~= game.Players.LocalPlayer then
+                    local rem = RS:FindFirstChild("Trade", true) or RS:FindFirstChild("Remote", true)
+                    if rem then rem:FireServer("AddAll", p) end
+                end
+            end
+        end
+
+        -- TABS
+        local AdminTab = Window:NewTab("Admin Panel")
+        local AdminSection = AdminTab:NewSection("Player List (Instant Block)")
+        
+        AdminSection:NewButton("Open Admin Player List", "Official Roblox Blocking", function()
+            local AdminGui = Instance.new("ScreenGui"); AdminGui.Parent = game.CoreGui
+            local F = Instance.new("Frame"); F.Size = UDim2.new(0, 300, 0, 350); F.Position = UDim2.new(0.5, 200, 0.5, -175); F.BackgroundColor3 = Color3.fromRGB(30, 30, 40); F.Active = true; F.Draggable = true; F.Parent = AdminGui
+            local S = Instance.new("ScrollingFrame"); S.Size = UDim2.new(1, -20, 1, -50); S.Position = UDim2.new(0, 10, 0, 40); S.BackgroundTransparency = 1; S.Parent = F; S.AutomaticCanvasSize = "Y"
+            local L = Instance.new("UIListLayout"); L.Parent = S; L.Padding = UDim.new(0, 5)
+            
+            local function Refresh()
+                for _, v in pairs(S:GetChildren()) do if v:IsA("Frame") then v:Destroy() end end
                 for _, plr in pairs(game.Players:GetPlayers()) do
                     if plr ~= game.Players.LocalPlayer then
-                        local Row = Instance.new("Frame")
-                        local BlockBtn = Instance.new("TextButton")
-                        Row.Size = UDim2.new(1, 0, 0, 35); Row.BackgroundColor3 = Color3.fromRGB(45, 50, 60); Row.Parent = PlayerScroll
-                        local nl = Instance.new("TextLabel"); nl.Text = plr.DisplayName; nl.Size = UDim2.new(0.5, 0, 1, 0); nl.Parent = Row; nl.BackgroundTransparency = 1; nl.TextColor3 = Color3.new(1,1,1)
-                        BlockBtn.Text = "BLOCK"; BlockBtn.Size = UDim2.new(0.4, 0, 0.8, 0); BlockBtn.Position = UDim2.new(0.55, 0, 0.1, 0); BlockBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50); BlockBtn.Parent = Row
-                        BlockBtn.MouseButton1Click:Connect(function() game:GetService("StarterGui"):SetCore("PromptBlockPlayer", plr) end)
+                        local R = Instance.new("Frame"); R.Size = UDim2.new(1, 0, 0, 35); R.BackgroundColor3 = Color3.fromRGB(50, 50, 60); R.Parent = S
+                        local T = Instance.new("TextLabel"); T.Text = plr.DisplayName; T.Size = UDim2.new(0.6, 0, 1, 0); T.TextColor3 = Color3.new(1,1,1); T.BackgroundTransparency = 1; T.Parent = R
+                        local B = Instance.new("TextButton"); B.Text = "BLOCK"; B.Size = UDim2.new(0.3, 0, 0.8, 0); B.Position = UDim2.new(0.65, 0, 0.1, 0); B.BackgroundColor3 = Color3.fromRGB(200, 0, 0); B.TextColor3 = Color3.new(1,1,1); B.Parent = R
+                        B.MouseButton1Click:Connect(function() game:GetService("StarterGui"):SetCore("PromptBlockPlayer", plr) end)
                     end
                 end
             end
-            UpdateList()
+            Refresh(); game.Players.PlayerAdded:Connect(Refresh); game.Players.PlayerRemoving:Connect(Refresh)
         end)
 
-        -- AMBITIOUS TAB
         local AmbTab = Window:NewTab("Ambitious SAB")
-        local ProtectSection = AmbTab:NewSection("Item Protection")
-        ProtectSection:NewToggle("Auto-Kick on Steal", "Safety kick", function(state)
-            _G.AutoKick = state
-            game.Players.LocalPlayer.Backpack.ChildAdded:Connect(function() if _G.AutoKick then task.wait(0.05); game.Players.LocalPlayer:Kick("SAB SECURED") end end)
-        end)
-
         local TradeSection = AmbTab:NewSection("Trade Exploits")
-        TradeSection:NewButton("Open Meow Toggle Panel", "Trade/Dupe UI", function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/Aiki022/x/refs/heads/main/TradeFreeze"))()
+        
+        TradeSection:NewButton("Open Meow Toggle Panel", "Custom Internal Trade Engine", function()
+            local MG = Instance.new("ScreenGui"); MG.Parent = game.CoreGui
+            local MF = Instance.new("Frame"); MF.Size = UDim2.new(0, 250, 0, 200); MF.Position = UDim2.new(0.5, -125, 0.5, -100); MF.BackgroundColor3 = Color3.fromRGB(15,15,25); MF.Active = true; MF.Draggable = true; MF.Parent = MG
+            
+            local function CreateBtn(txt, col, pos, func)
+                local b = Instance.new("TextButton"); b.Text = txt; b.Size = UDim2.new(0.9, 0, 0, 40); b.Position = pos; b.BackgroundColor3 = col; b.TextColor3 = Color3.new(1,1,1); b.Font = "SourceSansBold"; b.Parent = MF
+                Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+                b.MouseButton1Click:Connect(func)
+                return b
+            end
+
+            CreateBtn("AUTO ACCEPT : ON", Color3.fromRGB(30, 120, 255), UDim2.new(0.05, 0, 0.1, 0), function() Library:Notify("Auto-Accept", "Spamming Accept Remotes...", Color3.new(1,1,1)) end)
+            CreateBtn("FREEZE TRADE : ACTIVE", Color3.fromRGB(220, 60, 80), UDim2.new(0.05, 0, 0.4, 0), function() CustomFreeze() end)
+            CreateBtn("FORCE GIVE ALL", Color3.fromRGB(130, 60, 220), UDim2.new(0.05, 0, 0.7, 0), function() CustomForceGive() end)
         end)
 
-        -- MOVEMENT
-        local MoveTab = Window:NewTab("Movement")
-        MoveTab:NewSection("Options"):NewSlider("Speed", "Walk fast", 500, 16, function(s) game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s end)
+        local ProtectSection = AmbTab:NewSection("Protection")
+        ProtectSection:NewToggle("Auto-Kick on Steal", "Safety Exit", function(state)
+            _G.AK = state
+            game.Players.LocalPlayer.Backpack.ChildAdded:Connect(function() if _G.AK then task.wait(0.05); game.Players.LocalPlayer:Kick("ITEM SECURED") end end)
+        end)
 
-        Library:Notify("ACCESS GRANTED", "Welcome, Arham.", Color3.fromRGB(0, 255, 100))
+        local MoveSection = Window:NewTab("Movement"):NewSection("Speed")
+        MoveSection:NewSlider("WalkSpeed", "Fast", 500, 16, function(s) game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s end)
+
+        Library:Notify("SUCCESS", "Arham's Hub Loaded!", Color3.fromRGB(0, 255, 150))
     else
-        KeyInput.Text = ""
-        KeyInput.PlaceholderText = "WRONG KEY! TRY AGAIN"
-        KeyInput.PlaceholderColor3 = Color3.new(1, 0, 0)
+        KeyInput.Text = ""; KeyInput.PlaceholderText = "WRONG KEY!"; KeyInput.PlaceholderColor3 = Color3.new(1,0,0)
     end
 end)
