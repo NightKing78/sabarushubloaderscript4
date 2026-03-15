@@ -1,65 +1,112 @@
-local UserInputService = game:GetService("UserInputService")
-local HttpService = game:GetService("HttpService")
-local TeleportService = game:GetService("TeleportService")
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
+-- [[ XENO EXECUTOR COMPATIBLE UI & UTILITIES ]] --
 
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
+local player = game.Players.LocalPlayer
+local userInput = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local teleportService = game:GetService("TeleportService")
+local httpService = game:GetService("HttpService")
 
--- State Variables
-local flying = false
-local flySpeed = 50
-local walkSpeedActive = false
-local normalWalkSpeed = 16
-local customWalkSpeed = 100
-local customJumpPower = 100
+-- Create GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "XenoUtilityGui"
+gui.ResetOnSpawn = false -- Keeps GUI on death
+gui.Parent = player:WaitForChild("PlayerGui")
 
--- REJOIN FUNCTION
-local function rejoin()
-    TeleportService:Teleport(game.PlaceId, player)
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 250, 0, 400)
+mainFrame.Position = UDim2.new(0.01, 0, 0.4, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.Active = true
+mainFrame.Draggable = true -- Allows you to move it
+mainFrame.Parent = gui
+
+local layout = Instance.new("UIListLayout")
+layout.Parent = mainFrame
+layout.Padding = UDim.new(0, 5)
+
+-- Utility Functions
+local function createButton(text, color, callback)
+    local btn = Instance.new("TextButton")
+    btn.Text = text
+    btn.Size = UDim2.new(1, -10, 0, 40)
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.FredokaOne
+    btn.TextScaled = true
+    btn.Parent = mainFrame
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+    
+    btn.MouseButton1Click:Connect(callback)
+    return btn
 end
 
--- SERVER HOP FUNCTION
-local function serverHop()
-    local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+-- [[ FEATURES ]] --
+
+-- 1. Infinite Jump Logic
+local infJump = false
+createButton("Inf Jump: OFF", Color3.fromRGB(200, 0, 0), function(self)
+    infJump = not infJump
+    script.Parent.Text = "Inf Jump: " .. (infJump and "ON" or "OFF")
+end)
+
+userInput.JumpRequest:Connect(function()
+    if infJump then
+        player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+-- 2. Speed & Jump Boost
+createButton("Boost Stats", Color3.fromRGB(0, 150, 200), function()
+    local hum = player.Character:FindFirstChildOfClass("Humanoid")
+    hum.WalkSpeed = 100
+    hum.JumpPower = 150
+end)
+
+-- 3. Fly (Simple Hover/Speed)
+local flying = false
+createButton("Toggle Fly", Color3.fromRGB(150, 0, 200), function()
+    flying = not flying
+    local bv = Instance.new("BodyVelocity")
+    if flying then
+        bv.Velocity = Vector3.new(0,0,0)
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Parent = player.Character.HumanoidRootPart
+        while flying do
+            bv.Velocity = player.Character.Humanoid.MoveDirection * 50
+            wait()
+        end
+    else
+        player.Character.HumanoidRootPart:FindFirstChild("BodyVelocity"):Destroy()
+    end
+end)
+
+-- 4. Anti-Ragdoll
+createButton("Anti-Ragdoll", Color3.fromRGB(0, 200, 100), function()
+    player.Character.Humanoid.StateChanged:Connect(function(_, state)
+        if state == Enum.HumanoidStateType.Ragdoll then
+            player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        end
+    end)
+end)
+
+-- 5. Rejoin & Server Hop
+createButton("Rejoin", Color3.fromRGB(100, 100, 100), function()
+    teleportService:Teleport(game.PlaceId, player)
+end)
+
+createButton("Server Hop", Color3.fromRGB(100, 100, 100), function()
+    local servers = httpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
     for _, s in pairs(servers.data) do
         if s.playing < s.maxPlayers and s.id ~= game.JobId then
-            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
-            break
+            teleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
         end
     end
-end
-
--- ANTI-RAGDOLL (Disables falling state)
-humanoid.StateChanged:Connect(function(_, newState)
-    if newState == Enum.HumanoidStateType.FallingDown or newState == Enum.HumanoidStateType.Ragdoll then
-        humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-    end
 end)
 
--- FLY LOGIC
-RunService.RenderStepped:Connect(function()
-    if flying and character and character:FindFirstChild("HumanoidRootPart") then
-        local root = character.HumanoidRootPart
-        root.Velocity = Vector3.new(0, 0.1, 0) -- Counteract gravity slightly
-        
-        -- Basic fly movement logic would go here (BodyVelocity is usually best)
-    end
+-- 6. Saba Rush Hub Loader
+createButton("LOAD SABA RUSH", Color3.fromRGB(255, 200, 0), function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/arhamred24-del/sabarushubloaderscript4/refs/heads/main/scccccccccsacwd"))()
 end)
-
--- UI BUTTON HELPERS
--- (You would create buttons for each of these functions)
-
--- Example for WalkSpeed Toggle:
-local function toggleSpeed()
-    walkSpeedActive = not walkSpeedActive
-    humanoid.WalkSpeed = walkSpeedActive and customWalkSpeed or normalWalkSpeed
-end
-
--- Example for JumpPower:
-local function setJump()
-    humanoid.UseJumpPower = true
-    humanoid.JumpPower = customJumpPower
-end
