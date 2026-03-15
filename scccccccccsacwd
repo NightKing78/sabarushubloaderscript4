@@ -1,0 +1,65 @@
+local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- State Variables
+local flying = false
+local flySpeed = 50
+local walkSpeedActive = false
+local normalWalkSpeed = 16
+local customWalkSpeed = 100
+local customJumpPower = 100
+
+-- REJOIN FUNCTION
+local function rejoin()
+    TeleportService:Teleport(game.PlaceId, player)
+end
+
+-- SERVER HOP FUNCTION
+local function serverHop()
+    local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+    for _, s in pairs(servers.data) do
+        if s.playing < s.maxPlayers and s.id ~= game.JobId then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
+            break
+        end
+    end
+end
+
+-- ANTI-RAGDOLL (Disables falling state)
+humanoid.StateChanged:Connect(function(_, newState)
+    if newState == Enum.HumanoidStateType.FallingDown or newState == Enum.HumanoidStateType.Ragdoll then
+        humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+    end
+end)
+
+-- FLY LOGIC
+RunService.RenderStepped:Connect(function()
+    if flying and character and character:FindFirstChild("HumanoidRootPart") then
+        local root = character.HumanoidRootPart
+        root.Velocity = Vector3.new(0, 0.1, 0) -- Counteract gravity slightly
+        
+        -- Basic fly movement logic would go here (BodyVelocity is usually best)
+    end
+end)
+
+-- UI BUTTON HELPERS
+-- (You would create buttons for each of these functions)
+
+-- Example for WalkSpeed Toggle:
+local function toggleSpeed()
+    walkSpeedActive = not walkSpeedActive
+    humanoid.WalkSpeed = walkSpeedActive and customWalkSpeed or normalWalkSpeed
+end
+
+-- Example for JumpPower:
+local function setJump()
+    humanoid.UseJumpPower = true
+    humanoid.JumpPower = customJumpPower
+end
