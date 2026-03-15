@@ -1,140 +1,255 @@
--- [[ XENO EXECUTOR COMPATIBLE - RIVALS EDITION ]] --
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 
-local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
-local camera = workspace.CurrentCamera
-local userInput = game:GetService("UserInputService")
-local runService = game:GetService("RunService")
-local teleportService = game:GetService("TeleportService")
-local httpService = game:GetService("HttpService")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
--- Create GUI
+-- Main GUI
 local gui = Instance.new("ScreenGui")
-gui.Name = "XenoRivalsGui"
+gui.Name = "ModernMenuGui"
 gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.Parent = playerGui
 
-local mainFrame = Instance.new("ScrollingFrame") -- Changed to ScrollingFrame for more space
-mainFrame.Size = UDim2.new(0, 250, 0, 450)
-mainFrame.Position = UDim2.new(0.01, 0, 0.3, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-mainFrame.ScrollBarThickness = 5
-mainFrame.Active = true
-mainFrame.Draggable = true
-mainFrame.Parent = gui
+-- Frame
+local frame = Instance.new("Frame")
+frame.Name = "MainFrame"
+frame.Size = UDim2.new(0, 400, 0, 300) -- Example size
+frame.Position = UDim2.new(0.5, -200, 0.5, -150) -- Centered
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.Active = true
+frame.BorderSizePixel = 0
+frame.Parent = gui
 
-local layout = Instance.new("UIListLayout")
-layout.Parent = mainFrame
-layout.Padding = UDim.new(0, 5)
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 8)
+uiCorner.Parent = frame
 
--- Helper to Create Buttons
-local function createButton(text, color, callback)
-    local btn = Instance.new("TextButton")
-    btn.Text = text
-    btn.Size = UDim2.new(0.9, 0, 0, 40)
-    btn.BackgroundColor3 = color
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.Font = Enum.Font.FredokaOne
-    btn.TextScaled = true
-    btn.Parent = mainFrame
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = btn
-    
-    btn.MouseButton1Click:Connect(function()
-        callback(btn)
-    end)
-    return btn
+-- Sidebar
+local sidebar = Instance.new("Frame")
+sidebar.Name = "Sidebar"
+sidebar.Size = UDim2.new(0.3, 0, 1, 0)
+sidebar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+sidebar.BorderSizePixel = 0
+sidebar.Parent = frame
+
+local sidebarCorner = Instance.new("UICorner")
+sidebarCorner.CornerRadius = UDim.new(0, 8)
+sidebarCorner.Parent = sidebar
+
+local sidebarList = Instance.new("UIListLayout")
+sidebarList.Padding = UDim.new(0, 5)
+sidebarList.Parent = sidebar
+
+-- Example Sidebar Button (add more as needed)
+local playerButton = Instance.new("TextButton")
+playerButton.Name = "PlayerButton"
+playerButton.Size = UDim2.new(1, -10, 0, 30)
+playerButton.Position = UDim2.new(0, 5, 0, 5) -- Small padding
+playerButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+playerButton.Text = "Player"
+playerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+playerButton.Font = Enum.Font.SourceSans
+playerButton.TextSize = 16
+playerButton.Parent = sidebar
+
+local playerButtonCorner = Instance.new("UICorner")
+playerButtonCorner.CornerRadius = UDim.new(0, 4)
+playerButtonCorner.Parent = playerButton
+
+-- Content Panel
+local contentPanel = Instance.new("Frame")
+contentPanel.Name = "ContentPanel"
+contentPanel.Size = UDim2.new(0.7, 0, 1, 0)
+contentPanel.Position = UDim2.new(0.3, 0, 0, 0)
+contentPanel.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+contentPanel.BorderSizePixel = 0
+contentPanel.Parent = frame
+
+local contentCorner = Instance.new("UICorner")
+contentCorner.CornerRadius = UDim.new(0, 8)
+contentCorner.Parent = contentPanel
+
+local contentTitle = Instance.new("TextLabel")
+contentTitle.Name = "Title"
+contentTitle.Size = UDim2.new(1, -10, 0, 30)
+contentTitle.Position = UDim2.new(0, 5, 0, 5)
+contentTitle.BackgroundTransparency = 1
+contentTitle.Text = "Player Settings"
+contentTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+contentTitle.Font = Enum.Font.SourceSansSemibold
+contentTitle.TextSize = 20
+contentTitle.TextXAlignment = Enum.TextXAlignment.Left
+contentTitle.Parent = contentPanel
+
+local contentList = Instance.new("UIListLayout")
+contentList.Padding = UDim.new(0, 10)
+contentList.Parent = contentPanel
+
+-- Modern Toggle Switch Function
+local function createToggle(name, parent)
+	local container = Instance.new("Frame")
+	container.Name = name .. "ToggleContainer"
+	container.Size = UDim2.new(1, -10, 0, 30)
+	container.Position = UDim2.new(0, 5, 0, 0)
+	container.BackgroundTransparency = 1
+	container.Parent = parent
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(0.7, 0, 1, 0)
+	label.BackgroundTransparency = 1
+	label.Text = name
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.Font = Enum.Font.SourceSans
+	label.TextSize = 16
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = container
+
+	local toggle = Instance.new("TextButton")
+	toggle.Name = "Toggle"
+	toggle.Size = UDim2.new(0, 50, 0, 24)
+	toggle.Position = UDim2.new(1, -55, 0.5, -12)
+	toggle.BackgroundColor3 = Color3.fromRGB(100, 100, 100) -- Off Color
+	toggle.Text = ""
+	toggle.Parent = container
+
+	local toggleCorner = Instance.new("UICorner")
+	toggleCorner.CornerRadius = UDim.new(1, 0) -- Round
+	toggleCorner.Parent = toggle
+
+	local knob = Instance.new("Frame")
+	knob.Name = "Knob"
+	knob.Size = UDim2.new(0, 20, 0, 20)
+	knob.Position = UDim2.new(0, 2, 0.5, -10)
+	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	knob.Parent = toggle
+
+	local knobCorner = Instance.new("UICorner")
+	knobCorner.CornerRadius = UDim.new(1, 0)
+	knobCorner.Parent = knob
+
+	local isOn = false
+	toggle.MouseButton1Click:Connect(function()
+		isOn = not isOn
+		if isOn then
+			toggle.BackgroundColor3 = Color3.fromRGB(0, 120, 215) -- On Color (Blue)
+			knob:TweenPosition(UDim2.new(1, -22, 0.5, -10), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.2)
+		else
+			toggle.BackgroundColor3 = Color3.fromRGB(100, 100, 100) -- Off Color
+			knob:TweenPosition(UDim2.new(0, 2, 0.5, -10), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.2)
+		else
+		return isOn
+	end)
 end
 
--- [[ MOVEMENT SECTION ]] --
+-- Slider Function
+local function createSlider(name, min, max, parent)
+    local container = Instance.new("Frame")
+    container.Name = name .. "SliderContainer"
+    container.Size = UDim2.new(1, -10, 0, 50)
+    container.BackgroundTransparency = 1
+    container.Parent = parent
 
-local infJump = false
-createButton("Inf Jump: OFF", Color3.fromRGB(200, 0, 0), function(btn)
-    infJump = not infJump
-    if infJump then
-        btn.Text = "Inf Jump: ON"
-        btn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-    else
-        btn.Text = "Inf Jump: OFF"
-        btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-    end
-end)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.BackgroundTransparency = 1
+    label.Text = name .. ": " .. min
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 16
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
 
-userInput.JumpRequest:Connect(function()
-    if infJump and player.Character then
-        local hum = player.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
-    end
-end)
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Name = "SliderFrame"
+    sliderFrame.Size = UDim2.new(1, -10, 0, 10)
+    sliderFrame.Position = UDim2.new(0, 5, 0, 25)
+    sliderFrame.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    sliderFrame.Parent = container
 
--- [[ RIVALS COMBAT SECTION ]] --
+    local sliderCorner = Instance.new("UICorner")
+    sliderCorner.CornerRadius = UDim.new(1, 0)
+    sliderCorner.Parent = sliderFrame
 
-local aimbotEnabled = false
-createButton("Rivals Aimbot: OFF", Color3.fromRGB(100, 0, 0), function(btn)
-    aimbotEnabled = not aimbotEnabled
-    btn.Text = aimbotEnabled and "Aimbot: ON" or "Aimbot: OFF"
-    btn.BackgroundColor3 = aimbotEnabled and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(100, 0, 0)
-end)
+    local fillFrame = Instance.new("Frame")
+    fillFrame.Name = "Fill"
+    fillFrame.Size = UDim2.new(0, 0, 1, 0)
+    fillFrame.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+    fillFrame.Parent = sliderFrame
 
-local autoShoot = false
-createButton("Rivals AutoShoot: OFF", Color3.fromRGB(100, 0, 0), function(btn)
-    autoShoot = not autoShoot
-    btn.Text = autoShoot and "AutoShoot: ON" or "AutoShoot: OFF"
-    btn.BackgroundColor3 = autoShoot and Color3.fromRGB(255, 100, 0) or Color3.fromRGB(100, 0, 0)
-end)
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(1, 0)
+    fillCorner.Parent = fillFrame
 
--- Combat Logic (Aimbot/Autoshoot Loop)
-runService.RenderStepped:Connect(function()
-    if aimbotEnabled or autoShoot then
-        local closestEnemy = nil
-        local shortestDist = math.huge
+    local knob = Instance.new("TextButton")
+    knob.Name = "Knob"
+    knob.Size = UDim2.new(0, 20, 0, 20)
+    knob.Position = UDim2.new(0, -10, 0.5, -10)
+    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    knob.Text = ""
+    knob.Parent = sliderFrame
 
-        for _, v in pairs(game.Players:GetPlayers()) do
-            if v ~= player and v.Team ~= player.Team and v.Character and v.Character:FindFirstChild("Head") then
-                local head = v.Character.Head
-                local pos, onScreen = camera:WorldToViewportPoint(head.Position)
-                
-                if onScreen then
-                    local dist = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(pos.X, pos.Y)).Magnitude
-                    if dist < shortestDist then
-                        closestEnemy = v
-                        shortestDist = dist
-                    end
-                end
-            end
+    local knobCorner = Instance.new("UICorner")
+    knobCorner.CornerRadius = UDim.new(1, 0)
+    knobCorner.Parent = knob
+
+    local dragging = false
+    knob.MouseButton1Down:Connect(function() dragging = true end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local MousePos = UserInputService:GetMouseLocation().X
+            local FramePos = sliderFrame.AbsolutePosition.X
+            local FrameWidth = sliderFrame.AbsoluteSize.X
+            local percentage = math.clamp((MousePos - FramePos) / FrameWidth, 0, 1)
+            
+            fillFrame.Size = UDim2.new(percentage, 0, 1, 0)
+            knob.Position = UDim2.new(percentage, -10, 0.5, -10)
+            
+            local value = math.floor(min + (max - min) * percentage)
+            label.Text = name .. ": " .. value
         end
+    end)
+end
 
-        if closestEnemy then
-            if aimbotEnabled then
-                camera.CFrame = CFrame.new(camera.CFrame.Position, closestEnemy.Character.Head.Position)
-            end
-            if autoShoot then
-                mouse1press() -- Standard executor function to click
-                wait()
-                mouse1release()
-            end
-        end
-    end
+-- Create the specific controls from the image
+createToggle("Speed Boost", contentPanel)
+createToggle("Max Speed Boost", contentPanel)
+createToggle("Infinity Jump", contentPanel)
+createToggle("Jump Boost", contentPanel)
+createSlider("Jump Boost Altitude", 50, 150, contentPanel) -- Min, Max
+
+
+-- Draggable Script
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+	local delta = input.Position - dragStart
+	frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
 end)
 
--- [[ UTILITIES ]] --
-
-createButton("Speed Boost (100)", Color3.fromRGB(50, 50, 50), function()
-    if player.Character then player.Character.Humanoid.WalkSpeed = 100 end
+frame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
 end)
 
-createButton("Server Hop", Color3.fromRGB(80, 80, 80), function()
-    local servers = httpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
-    for _, s in pairs(servers.data) do
-        if s.playing < s.maxPlayers and s.id ~= game.JobId then
-            teleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
-        end
-    end
-end)
-
-createButton("LOAD SABA RUSH", Color3.fromRGB(255, 200, 0), function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/arhamred24-del/sabarushubloaderscript4/refs/heads/main/scccccccccsacwd"))()
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
 end)
