@@ -1,6 +1,8 @@
--- [[ XENO EXECUTOR COMPATIBLE UI & UTILITIES ]] --
+-- [[ XENO EXECUTOR COMPATIBLE - RIVALS EDITION ]] --
 
 local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+local camera = workspace.CurrentCamera
 local userInput = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
 local teleportService = game:GetService("TeleportService")
@@ -8,27 +10,29 @@ local httpService = game:GetService("HttpService")
 
 -- Create GUI
 local gui = Instance.new("ScreenGui")
-gui.Name = "XenoUtilityGui"
-gui.ResetOnSpawn = false -- Keeps GUI on death
+gui.Name = "XenoRivalsGui"
+gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 250, 0, 400)
-mainFrame.Position = UDim2.new(0.01, 0, 0.4, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+local mainFrame = Instance.new("ScrollingFrame") -- Changed to ScrollingFrame for more space
+mainFrame.Size = UDim2.new(0, 250, 0, 450)
+mainFrame.Position = UDim2.new(0.01, 0, 0.3, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.ScrollBarThickness = 5
 mainFrame.Active = true
-mainFrame.Draggable = true -- Allows you to move it
+mainFrame.Draggable = true
 mainFrame.Parent = gui
 
 local layout = Instance.new("UIListLayout")
 layout.Parent = mainFrame
 layout.Padding = UDim.new(0, 5)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Utility Functions
+-- Helper to Create Buttons
 local function createButton(text, color, callback)
     local btn = Instance.new("TextButton")
     btn.Text = text
-    btn.Size = UDim2.new(1, -10, 0, 40)
+    btn.Size = UDim2.new(0.9, 0, 0, 40)
     btn.BackgroundColor3 = color
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.Font = Enum.Font.FredokaOne
@@ -39,65 +43,90 @@ local function createButton(text, color, callback)
     corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = btn
     
-    btn.MouseButton1Click:Connect(callback)
+    btn.MouseButton1Click:Connect(function()
+        callback(btn)
+    end)
     return btn
 end
 
--- [[ FEATURES ]] --
+-- [[ MOVEMENT SECTION ]] --
 
--- 1. Infinite Jump Logic
 local infJump = false
-createButton("Inf Jump: OFF", Color3.fromRGB(200, 0, 0), function(self)
+createButton("Inf Jump: OFF", Color3.fromRGB(200, 0, 0), function(btn)
     infJump = not infJump
-    script.Parent.Text = "Inf Jump: " .. (infJump and "ON" or "OFF")
+    if infJump then
+        btn.Text = "Inf Jump: ON"
+        btn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+    else
+        btn.Text = "Inf Jump: OFF"
+        btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    end
 end)
 
 userInput.JumpRequest:Connect(function()
-    if infJump then
-        player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+    if infJump and player.Character then
+        local hum = player.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
 
--- 2. Speed & Jump Boost
-createButton("Boost Stats", Color3.fromRGB(0, 150, 200), function()
-    local hum = player.Character:FindFirstChildOfClass("Humanoid")
-    hum.WalkSpeed = 100
-    hum.JumpPower = 150
+-- [[ RIVALS COMBAT SECTION ]] --
+
+local aimbotEnabled = false
+createButton("Rivals Aimbot: OFF", Color3.fromRGB(100, 0, 0), function(btn)
+    aimbotEnabled = not aimbotEnabled
+    btn.Text = aimbotEnabled and "Aimbot: ON" or "Aimbot: OFF"
+    btn.BackgroundColor3 = aimbotEnabled and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(100, 0, 0)
 end)
 
--- 3. Fly (Simple Hover/Speed)
-local flying = false
-createButton("Toggle Fly", Color3.fromRGB(150, 0, 200), function()
-    flying = not flying
-    local bv = Instance.new("BodyVelocity")
-    if flying then
-        bv.Velocity = Vector3.new(0,0,0)
-        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        bv.Parent = player.Character.HumanoidRootPart
-        while flying do
-            bv.Velocity = player.Character.Humanoid.MoveDirection * 50
-            wait()
+local autoShoot = false
+createButton("Rivals AutoShoot: OFF", Color3.fromRGB(100, 0, 0), function(btn)
+    autoShoot = not autoShoot
+    btn.Text = autoShoot and "AutoShoot: ON" or "AutoShoot: OFF"
+    btn.BackgroundColor3 = autoShoot and Color3.fromRGB(255, 100, 0) or Color3.fromRGB(100, 0, 0)
+end)
+
+-- Combat Logic (Aimbot/Autoshoot Loop)
+runService.RenderStepped:Connect(function()
+    if aimbotEnabled or autoShoot then
+        local closestEnemy = nil
+        local shortestDist = math.huge
+
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if v ~= player and v.Team ~= player.Team and v.Character and v.Character:FindFirstChild("Head") then
+                local head = v.Character.Head
+                local pos, onScreen = camera:WorldToViewportPoint(head.Position)
+                
+                if onScreen then
+                    local dist = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(pos.X, pos.Y)).Magnitude
+                    if dist < shortestDist then
+                        closestEnemy = v
+                        shortestDist = dist
+                    end
+                end
+            end
         end
-    else
-        player.Character.HumanoidRootPart:FindFirstChild("BodyVelocity"):Destroy()
+
+        if closestEnemy then
+            if aimbotEnabled then
+                camera.CFrame = CFrame.new(camera.CFrame.Position, closestEnemy.Character.Head.Position)
+            end
+            if autoShoot then
+                mouse1press() -- Standard executor function to click
+                wait()
+                mouse1release()
+            end
+        end
     end
 end)
 
--- 4. Anti-Ragdoll
-createButton("Anti-Ragdoll", Color3.fromRGB(0, 200, 100), function()
-    player.Character.Humanoid.StateChanged:Connect(function(_, state)
-        if state == Enum.HumanoidStateType.Ragdoll then
-            player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-        end
-    end)
+-- [[ UTILITIES ]] --
+
+createButton("Speed Boost (100)", Color3.fromRGB(50, 50, 50), function()
+    if player.Character then player.Character.Humanoid.WalkSpeed = 100 end
 end)
 
--- 5. Rejoin & Server Hop
-createButton("Rejoin", Color3.fromRGB(100, 100, 100), function()
-    teleportService:Teleport(game.PlaceId, player)
-end)
-
-createButton("Server Hop", Color3.fromRGB(100, 100, 100), function()
+createButton("Server Hop", Color3.fromRGB(80, 80, 80), function()
     local servers = httpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
     for _, s in pairs(servers.data) do
         if s.playing < s.maxPlayers and s.id ~= game.JobId then
@@ -106,7 +135,6 @@ createButton("Server Hop", Color3.fromRGB(100, 100, 100), function()
     end
 end)
 
--- 6. Saba Rush Hub Loader
 createButton("LOAD SABA RUSH", Color3.fromRGB(255, 200, 0), function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/arhamred24-del/sabarushubloaderscript4/refs/heads/main/scccccccccsacwd"))()
 end)
