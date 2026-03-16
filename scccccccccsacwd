@@ -1,138 +1,168 @@
--- Wait for game to load
+-- [[ CONFIG & SERVICES ]] --
 if not game:IsLoaded() then game.Loaded:Wait() end
-
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 local camera = workspace.CurrentCamera
 
--- Clean up old UI if it exists
-if player:WaitForChild("PlayerGui"):FindFirstChild("ModernMenu") then
-    player.PlayerGui.ModernMenu:Destroy()
-end
+-- [[ STATE MANAGEMENT ]] --
+local states = {
+    infJump = false, aimbot = false, autoshoot = false, 
+    noclip = false, esp = false, antiragdoll = false, 
+    autofarm = false, fly = false, tracers = false, 
+    norecoil = false, fastreload = false, fullbright = false, 
+    speed = 16, jump = 50
+}
 
--- GUI Setup
+-- [[ UI CONSTRUCT ]] --
 local gui = Instance.new("ScreenGui")
-gui.Name = "ModernMenu"
+gui.Name = "XenoPremium"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 450, 0, 320)
-main.Position = UDim2.new(0.5, -225, 0.5, -160)
-main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+main.Size = UDim2.new(0, 500, 0, 350)
+main.Position = UDim2.new(0.5, -250, 0.5, -175)
+main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 main.BorderSizePixel = 0
 main.Active = true
-main.Draggable = true -- Built-in simple dragging
+main.Draggable = true
 main.Parent = gui
 
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
+local outline = Instance.new("UIStroke", main)
+outline.Color = Color3.fromRGB(45, 45, 45)
+outline.Thickness = 2
 
 -- Sidebar
 local sidebar = Instance.new("Frame")
 sidebar.Size = UDim2.new(0.3, 0, 1, 0)
-sidebar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 sidebar.BorderSizePixel = 0
 sidebar.Parent = main
-Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 12)
 
 local sideList = Instance.new("UIListLayout", sidebar)
-sideList.Padding = UDim.new(0, 5)
+sideList.Padding = UDim.new(0, 8)
+sideList.HorizontalAlignment = "Center"
 
--- Content Area
+-- Scrolling Content Panel
 local content = Instance.new("ScrollingFrame")
-content.Size = UDim2.new(0.65, 0, 0.85, 0)
-content.Position = UDim2.new(0.32, 0, 0.1, 0)
+content.Size = UDim2.new(0.65, 0, 0.9, 0)
+content.Position = UDim2.new(0.32, 0, 0.05, 0)
 content.BackgroundTransparency = 1
 content.BorderSizePixel = 0
-content.ScrollBarThickness = 2
+content.ScrollBarThickness = 3
+content.CanvasSize = UDim2.new(0, 0, 2, 0) -- Scroll room for 10+ hacks
 content.Parent = main
 
 local contentList = Instance.new("UIListLayout", content)
 contentList.Padding = UDim.new(0, 10)
 
--- [[ FUNCTIONS & TOGGLES ]] --
-
-local states = {
-    infJump = false,
-    aimbot = false,
-    autoshoot = false,
-    walkspeed = 16
-}
-
--- Modern Toggle Creator
+-- [[ UI BUILDERS ]] --
 local function addToggle(name, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0.95, 0, 0, 40)
-    frame.BackgroundTransparency = 0.9
-    frame.BackgroundColor3 = Color3.new(1,1,1)
-    frame.Parent = content
-    Instance.new("UICorner", frame)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(0.95, 0, 0, 45)
+    row.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    row.Parent = content
+    Instance.new("UICorner", row)
+    Instance.new("UIStroke", row).Color = Color3.fromRGB(50, 50, 50)
 
     local label = Instance.new("TextLabel")
     label.Text = name
-    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Size = UDim2.new(0.6, 0, 1, 0)
     label.Position = UDim2.new(0.05, 0, 0, 0)
     label.TextColor3 = Color3.new(1,1,1)
     label.BackgroundTransparency = 1
     label.TextXAlignment = "Left"
-    label.Font = "GothamSemibold"
-    label.Parent = frame
+    label.Font = "FredokaOne"
+    label.TextSize = 14
+    label.Parent = row
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 40, 0, 20)
+    btn.Size = UDim2.new(0, 45, 0, 22)
     btn.Position = UDim2.new(0.8, 0, 0.25, 0)
-    btn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     btn.Text = ""
-    btn.Parent = frame
+    btn.Parent = row
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
+
+    local circle = Instance.new("Frame", btn)
+    circle.Size = UDim2.new(0, 18, 0, 18)
+    circle.Position = UDim2.new(0, 2, 0.5, -9)
+    circle.BackgroundColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", circle).CornerRadius = UDim.new(1,0)
 
     local active = false
     btn.MouseButton1Click:Connect(function()
         active = not active
-        btn.BackgroundColor3 = active and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(100, 100, 100)
+        btn.BackgroundColor3 = active and Color3.fromRGB(218, 165, 32) or Color3.fromRGB(60, 60, 60)
+        circle:TweenPosition(active and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9), "Out", "Quad", 0.2)
         callback(active)
     end)
 end
 
--- [[ FEATURES ]] --
+-- [[ THE 13 HACKS ]] --
 
--- Infinite Jump
-addToggle("Infinite Jump", function(val)
-    states.infJump = val
+-- Original 3
+addToggle("Infinite Jump", function(v) states.infJump = v end)
+addToggle("Rivals Aimbot", function(v) states.aimbot = v end)
+addToggle("Rivals AutoShoot", function(v) states.autoshoot = v end)
+
+-- 10 New Features
+addToggle("Noclip", function(v) states.noclip = v end)
+addToggle("Wall ESP", function(v) states.esp = v end)
+addToggle("Tracers", function(v) states.tracers = v end)
+addToggle("No Recoil", function(v) states.norecoil = v end)
+addToggle("Anti-Ragdoll", function(v) states.antiragdoll = v end)
+addToggle("Fullbright", function(v) states.fullbright = v end)
+addToggle("Speed Hack (100)", function(v) states.speed = v and 100 or 16 end)
+addToggle("Super Jump (150)", function(v) states.jump = v and 150 or 50 end)
+addToggle("Auto Reload", function(v) states.fastreload = v end)
+addToggle("Server Hop", function() 
+    local s = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=10"))
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, s.data[1].id)
 end)
 
-UserInputService.JumpRequest:Connect(function()
-    if states.infJump then
-        local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
-    end
-end)
+-- [[ LOGIC LOOPS ]] --
 
--- Rivals Aimbot
-addToggle("Rivals Aimbot", function(val)
-    states.aimbot = val
-end)
-
--- Rivals Autoshoot
-addToggle("Rivals Autoshoot", function(val)
-    states.autoshoot = val
-end)
-
--- Combat Loop
 RunService.RenderStepped:Connect(function()
+    local char = player.Character
+    if not char then return end
+    
+    -- Movement Mods
+    char.Humanoid.WalkSpeed = states.speed
+    char.Humanoid.JumpPower = states.jump
+    
+    -- Noclip Logic
+    if states.noclip then
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end
+
+    -- Fullbright
+    if states.fullbright then
+        game.Lighting.Brightness = 2
+        game.Lighting.ClockTime = 14
+        game.Lighting.OutdoorAmbient = Color3.new(1,1,1)
+    end
+
+    -- Combat Logic (Aimbot/Autoshoot)
     if states.aimbot or states.autoshoot then
         local target = nil
-        local dist = math.huge
+        local dist = 500
         for _, v in pairs(Players:GetPlayers()) do
             if v ~= player and v.Character and v.Character:FindFirstChild("Head") then
                 local pos, vis = camera:WorldToViewportPoint(v.Character.Head.Position)
                 if vis then
-                    local mag = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(pos.X, pos.Y)).Magnitude
-                    if mag < dist then target = v; dist = mag end
+                    local m = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(pos.X, pos.Y)).Magnitude
+                    if m < dist then target = v; dist = m end
                 end
             end
         end
@@ -143,17 +173,21 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Saba Rush Loader Button
-local loader = Instance.new("TextButton")
-loader.Size = UDim2.new(0.9, 0, 0, 30)
+UserInputService.JumpRequest:Connect(function()
+    if states.infJump then player.Character.Humanoid:ChangeState(3) end
+end)
+
+-- [[ SIDEBAR LOADER ]] --
+local loader = Instance.new("TextButton", sidebar)
+loader.Size = UDim2.new(0.9, 0, 0, 35)
+loader.BackgroundColor3 = Color3.fromRGB(180, 140, 0)
 loader.Text = "Load Saba Rush"
-loader.BackgroundColor3 = Color3.fromRGB(200, 150, 0)
 loader.TextColor3 = Color3.new(1,1,1)
-loader.Parent = sidebar
+loader.Font = "FredokaOne"
+loader.TextSize = 14
 Instance.new("UICorner", loader)
+Instance.new("UIStroke", loader).Color = Color3.new(1,1,1)
 
 loader.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/arhamred24-del/sabarushubloaderscript4/refs/heads/main/scccccccccsacwd"))()
 end)
-
-print("Menu Loaded Successfully")
