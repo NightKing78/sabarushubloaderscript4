@@ -1,24 +1,36 @@
--- [[ XENO V3 - RIGGED FOR RIVALS ]] --
+-- [[ XENO V5.1 - SPECTATE & PLAYER UTILITIES ]] --
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
 
--- UI CLEARING
-if player.PlayerGui:FindFirstChild("XenoFinal") then player.PlayerGui.XenoFinal:Destroy() end
-
--- THE UI (With Outlines)
+-- UI CLEANING
+if player.PlayerGui:FindFirstChild("XenoUltimate") then player.PlayerGui.XenoUltimate:Destroy() end
 local gui = Instance.new("ScreenGui", player.PlayerGui)
-gui.Name = "XenoFinal"
+gui.Name = "XenoUltimate"
+gui.ResetOnSpawn = false
 
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 480, 0, 380)
-main.Position = UDim2.new(0.5, -240, 0.5, -190)
+main.Size = UDim2.new(0, 500, 0, 420)
+main.Position = UDim2.new(0.5, -250, 0.5, -210)
 main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 main.BorderSizePixel = 0
 main.Active = true
 
--- Draggable Logic (Fixed for Xeno)
+-- Premium Outlines
+Instance.new("UICorner", main)
+local mainStroke = Instance.new("UIStroke", main)
+mainStroke.Color = Color3.fromRGB(80, 80, 80)
+mainStroke.Thickness = 2
+
+-- [[ KEYBIND TOGGLE (Z) ]] --
+UIS.InputBegan:Connect(function(input, chat)
+    if chat then return end
+    if input.KeyCode == Enum.KeyCode.Z then main.Visible = not main.Visible end
+end)
+
+-- CUSTOM DRAGGING
 local d, ds, sp
 main.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then d = true; ds = i.Position; sp = main.Position end end)
 UIS.InputChanged:Connect(function(i) if d and i.UserInputType == Enum.UserInputType.MouseMovement then 
@@ -27,57 +39,127 @@ UIS.InputChanged:Connect(function(i) if d and i.UserInputType == Enum.UserInputT
 end end)
 UIS.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then d = false end end)
 
--- Style
-Instance.new("UICorner", main)
-local out = Instance.new("UIStroke", main)
-out.Color = Color3.fromRGB(80, 80, 80); out.Thickness = 2
-
+-- SCROLLING AREA
 local scroll = Instance.new("ScrollingFrame", main)
-scroll.Size = UDim2.new(1, -20, 1, -20)
+scroll.Size = UDim2.new(1, -20, 1, -80)
 scroll.Position = UDim2.new(0, 10, 0, 10)
 scroll.BackgroundTransparency = 1
-scroll.BorderSizePixel = 0
-scroll.CanvasSize = UDim2.new(0, 0, 2, 0)
-
+scroll.CanvasSize = UDim2.new(0, 0, 3, 0)
+scroll.ScrollBarThickness = 2
 local list = Instance.new("UIListLayout", scroll)
 list.Padding = UDim.new(0, 8)
 
--- [[ THE "ACTUALLY WORKING" LOGIC ]] --
-local Toggles = {}
+-- [[ PLAYER UTILITIES SECTION ]] --
+local playerSection = Instance.new("Frame", scroll)
+playerSection.Size = UDim2.new(0.95, 0, 0, 120)
+playerSection.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Instance.new("UICorner", playerSection)
+Instance.new("UIStroke", playerSection).Color = Color3.fromRGB(60, 60, 60)
 
-local function CreateHack(name, callback)
+local nameInput = Instance.new("TextBox", playerSection)
+nameInput.Size = UDim2.new(0.9, 0, 0, 30)
+nameInput.Position = UDim2.new(0.05, 0, 0.1, 0)
+nameInput.PlaceholderText = "Enter Username..."
+nameInput.Text = ""
+nameInput.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+nameInput.TextColor3 = Color3.new(1,1,1)
+nameInput.Font = "FredokaOne"
+Instance.new("UICorner", nameInput)
+
+-- TP Button
+local tpBtn = Instance.new("TextButton", playerSection)
+tpBtn.Size = UDim2.new(0.42, 0, 0, 35)
+tpBtn.Position = UDim2.new(0.05, 0, 0.55, 0)
+tpBtn.Text = "Teleport To"
+tpBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+tpBtn.TextColor3 = Color3.new(1,1,1)
+tpBtn.Font = "FredokaOne"
+Instance.new("UICorner", tpBtn)
+
+-- Spectate Button
+local specBtn = Instance.new("TextButton", playerSection)
+specBtn.Size = UDim2.new(0.42, 0, 0, 35)
+specBtn.Position = UDim2.new(0.53, 0, 0.55, 0)
+specBtn.Text = "Spectate"
+specBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+specBtn.TextColor3 = Color3.new(1,1,1)
+specBtn.Font = "FredokaOne"
+Instance.new("UICorner", specBtn)
+
+local spectating = false
+specBtn.MouseButton1Click:Connect(function()
+    local targetName = nameInput.Text:lower()
+    local targetPlayer = nil
+    
+    for _, v in pairs(Players:GetPlayers()) do
+        if v.Name:lower():sub(1, #targetName) == targetName then
+            targetPlayer = v
+            break
+        end
+    end
+
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+        spectating = not spectating
+        if spectating then
+            camera.CameraSubject = targetPlayer.Character.Humanoid
+            specBtn.Text = "Unspectate"
+            specBtn.BackgroundColor3 = Color3.fromRGB(218, 165, 32)
+        else
+            camera.CameraSubject = player.Character.Humanoid
+            specBtn.Text = "Spectate"
+            specBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        end
+    end
+end)
+
+tpBtn.MouseButton1Click:Connect(function()
+    local targetName = nameInput.Text:lower()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v.Name:lower():sub(1, #targetName) == targetName and v.Character then
+            player.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
+        end
+    end
+end)
+
+-- [[ HACK BUILDER ]] --
+local Toggles = {}
+local function CreateHack(name)
     local btn = Instance.new("TextButton", scroll)
     btn.Size = UDim2.new(0.95, 0, 0, 40)
     btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.Text = name; btn.TextColor3 = Color3.new(1,1,1)
-    btn.Font = "FredokaOne"
+    btn.Text = "  " .. name; btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = "FredokaOne"; btn.TextXAlignment = "Left"
     Instance.new("UICorner", btn)
-    Instance.new("UIStroke", btn).Color = Color3.fromRGB(50, 50, 50)
+    local s = Instance.new("UIStroke", btn)
+    s.Color = Color3.fromRGB(60, 60, 60)
 
     btn.MouseButton1Click:Connect(function()
         Toggles[name] = not Toggles[name]
         btn.BackgroundColor3 = Toggles[name] and Color3.fromRGB(218, 165, 32) or Color3.fromRGB(30, 30, 30)
         btn.TextColor3 = Toggles[name] and Color3.new(0,0,0) or Color3.new(1,1,1)
-        if callback then callback(Toggles[name]) end
     end)
 end
 
--- [[ FIXED HACKS ]] --
+-- ACTIVATE HACKS
+CreateHack("Infinite Jump")
+CreateHack("Speed Hack")
+CreateHack("Aimbot")
+CreateHack("Autoshoot")
+CreateHack("Noclip")
 
--- 1. WORKING INF JUMP
-UIS.JumpRequest:Connect(function()
-    if Toggles["Infinite Jump"] and player.Character then
-        player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(3)
-    end
-end)
+-- FOOTER
+local footer = Instance.new("TextLabel", main)
+footer.Size = UDim2.new(1, 0, 0, 30)
+footer.Position = UDim2.new(0, 0, 1, -30)
+footer.Text = "Press 'Z' to toggle menu"
+footer.TextColor3 = Color3.new(0.5, 0.5, 0.5)
+footer.Font = "FredokaOne"
+footer.BackgroundTransparency = 1
 
--- 2. WORKING SPEED & JUMP (FORCED LOOP)
+-- ALL LOGIC (Loops)
 RunService.Stepped:Connect(function()
     if player.Character and player.Character:FindFirstChild("Humanoid") then
         if Toggles["Speed Hack"] then player.Character.Humanoid.WalkSpeed = 100 end
-        if Toggles["Super Jump"] then player.Character.Humanoid.JumpPower = 150 end
-        
-        -- 3. WORKING NOCLIP
         if Toggles["Noclip"] then
             for _, v in pairs(player.Character:GetDescendants()) do
                 if v:IsA("BasePart") then v.CanCollide = false end
@@ -86,58 +168,6 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- 4. AIMBOT & AUTOSHOOT (Optimized)
-RunService.RenderStepped:Connect(function()
-    if Toggles["Aimbot"] or Toggles["Autoshoot"] then
-        local target = nil
-        local dist = 400
-        for _, v in pairs(Players:GetPlayers()) do
-            if v ~= player and v.Character and v.Character:FindFirstChild("Head") then
-                local head = v.Character.Head
-                local _, onScreen = workspace.CurrentCamera:WorldToViewportPoint(head.Position)
-                if onScreen then
-                    local m = (UIS:GetMouseLocation() - Vector2.new(workspace.CurrentCamera:WorldToViewportPoint(head.Position).X, workspace.CurrentCamera:WorldToViewportPoint(head.Position).Y)).Magnitude
-                    if m < dist then target = v; dist = m end
-                end
-            end
-        end
-        if target then
-            if Toggles["Aimbot"] then workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, target.Character.Head.Position) end
-            if Toggles["Autoshoot"] then mouse1press(); task.wait(); mouse1release() end
-        end
-    end
-end)
-
--- 5. FULLBRIGHT (Forces Lighting)
-RunService.RenderStepped:Connect(function()
-    if Toggles["Fullbright"] then
-        game.Lighting.Ambient = Color3.new(1,1,1)
-        game.Lighting.OutdoorAmbient = Color3.new(1,1,1)
-        game.Lighting.ClockTime = 14
-    end
-end)
-
--- ADD BUTTONS
-CreateHack("Infinite Jump")
-CreateHack("Speed Hack")
-CreateHack("Super Jump")
-CreateHack("Noclip")
-CreateHack("Aimbot")
-CreateHack("Autoshoot")
-CreateHack("Fullbright")
-CreateHack("ESP Boxes")
-CreateHack("Anti-Ragdoll")
-CreateHack("No Recoil")
-
--- SABA RUSH BUTTON
-local loader = Instance.new("TextButton", scroll)
-loader.Size = UDim2.new(0.95, 0, 0, 45)
-loader.Text = "LOAD SABA RUSH"
-loader.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-loader.Font = "FredokaOne"
-loader.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", loader)
-
-loader.MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/arhamred24-del/sabarushubloaderscript4/refs/heads/main/scccccccccsacwd"))()
+UIS.JumpRequest:Connect(function()
+    if Toggles["Infinite Jump"] then player.Character.Humanoid:ChangeState(3) end
 end)
