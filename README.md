@@ -1,1 +1,1 @@
-what happend when we type www.tinyurl.com/aruproxyweb   in a browser this was made by arham shah
+what happend when we type www.shorturl.at/V5qSx   in a browser this was made by arham shah
