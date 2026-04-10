@@ -1,69 +1,161 @@
-local CorrectKey = "aru"
+-- [[ XENO V8.7 - KEYBIND SYSTEM & DUEL HUBS ]] --
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
 
--- 1. STABLE LOADER
-local KeyGui = Instance.new("ScreenGui", game.CoreGui)
-local MainKey = Instance.new("Frame", KeyGui)
-MainKey.Size = UDim2.new(0, 300, 0, 160)
-MainKey.Position = UDim2.new(0.5, -150, 0.5, -80)
-MainKey.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Instance.new("UICorner", MainKey)
+-- UI CLEANING
+if player.PlayerGui:FindFirstChild("XenoUltimate") then player.PlayerGui.XenoUltimate:Destroy() end
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+gui.Name = "XenoUltimate"
+gui.ResetOnSpawn = false
 
-local Input = Instance.new("TextBox", MainKey)
-Input.PlaceholderText = "ENTER KEY: aru"
-Input.Size = UDim2.new(0.8, 0, 0, 40)
-Input.Position = UDim2.new(0.1, 0, 0.25, 0)
-Input.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Input.TextColor3 = Color3.new(1, 1, 1)
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 500, 0, 550) -- Slightly taller for new hubs
+main.Position = UDim2.new(0.5, -250, 0.5, -275)
+main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+main.BorderSizePixel = 0
+main.Active = true
 
-local btn = Instance.new("TextButton", MainKey)
-btn.Text = "ACTIVATE STALKER"
-btn.Size = UDim2.new(0.8, 0, 0, 40)
-btn.Position = UDim2.new(0.1, 0, 0.6, 0)
-btn.BackgroundColor3 = Color3.fromRGB(180, 0, 50)
-btn.TextColor3 = Color3.new(1, 1, 1)
+-- Style & Outlines
+Instance.new("UICorner", main)
+local mainStroke = Instance.new("UIStroke", main)
+mainStroke.Color = Color3.fromRGB(80, 80, 80)
+mainStroke.Thickness = 2
 
-btn.MouseButton1Click:Connect(function()
-    if Input.Text == CorrectKey then
-        KeyGui:Destroy()
-        
-        local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-        local Window = Library.CreateLib("ARHAM'S SERVER STALKER", "DarkTheme")
-        
-        -- --- [ SERVER STALKER TAB ] ---
-        local StalkTab = Window:NewTab("Server Stalker")
-        local SSection = StalkTab:NewSection("Find Target Players")
+-- [[ TOGGLE MENU KEY (Z) ]] --
+UIS.InputBegan:Connect(function(input, chat)
+    if chat then return end
+    if input.KeyCode == Enum.KeyCode.Z then main.Visible = not main.Visible end
+end)
 
-        SSection:NewTextBox("Target Username", "Enter name to follow", function(txt)
-            _G.TargetName = txt
+-- DRAGGING LOGIC
+local d, ds, sp
+main.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then d = true; ds = i.Position; sp = main.Position end end)
+UIS.InputChanged:Connect(function(i) if d and i.UserInputType == Enum.UserInputType.MouseMovement then 
+    local delta = i.Position - ds
+    main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + delta.X, sp.Y.Scale, sp.Y.Offset + delta.Y) 
+end end)
+UIS.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then d = false end end)
+
+-- SCROLLING AREA
+local scroll = Instance.new("ScrollingFrame", main)
+scroll.Size = UDim2.new(1, -20, 1, -120)
+scroll.Position = UDim2.new(0, 10, 0, 10)
+scroll.BackgroundTransparency = 1
+scroll.CanvasSize = UDim2.new(0, 0, 4.5, 0)
+scroll.ScrollBarThickness = 2
+local list = Instance.new("UIListLayout", scroll)
+list.Padding = UDim.new(0, 8)
+
+-- [[ HACK BUILDER WITH KEYBIND LOGIC ]] --
+local Toggles = {}
+local function CreateHack(name, defaultKey)
+    local btn = Instance.new("TextButton", scroll)
+    btn.Size = UDim2.new(0.95, 0, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.Text = "  " .. name .. (defaultKey and " [" .. defaultKey .. "]" or ""); 
+    btn.TextColor3 = Color3.new(1,1,1); btn.Font = "FredokaOne"; btn.TextXAlignment = "Left"
+    Instance.new("UICorner", btn)
+    Instance.new("UIStroke", btn).Color = Color3.fromRGB(60, 60, 60)
+
+    local function toggle()
+        Toggles[name] = not Toggles[name]
+        btn.BackgroundColor3 = Toggles[name] and Color3.fromRGB(218, 165, 32) or Color3.fromRGB(30, 30, 30)
+        btn.TextColor3 = Toggles[name] and Color3.new(0,0,0) or Color3.new(1,1,1)
+    end
+    btn.MouseButton1Click:Connect(toggle)
+    if defaultKey then
+        UIS.InputBegan:Connect(function(input, chat)
+            if not chat and input.KeyCode == Enum.KeyCode[defaultKey] then toggle() end
         end)
+    end
+end
 
-        SSection:NewButton("Join Target Server", "Teleports you to their server", function()
-            local teleportService = game:GetService("TeleportService")
-            local players = game:GetService("Players")
-            -- Note: This only works if their 'Allow Joins' setting is on!
-            local success, result = pcall(function()
-                local targetId = players:GetUserIdFromNameAsync(_G.TargetName)
-                teleportService:TeleportToPlaceInstance(game.PlaceId, "Searching...", players.LocalPlayer)
-            end)
-            if not success then
-                Library:Notify("FAILED", "Could not find user or joins are off.", Color3.new(1,0,0))
-            end
-        end)
+-- [[ BUTTON ASSIGNMENTS ]] --
+CreateHack("CFrame Fly", "K") 
+CreateHack("Speed Hack", "J") 
+CreateHack("Infinite Jump")
+CreateHack("Aimbot")
+CreateHack("Autoshoot")
+CreateHack("Noclip", "N")
 
-        -- --- [ TRADE EXPLOITS (V3 ENGINE) ] ---
-        local TradeTab = Window:NewTab("Trade Exploits")
-        TradeTab:NewSection("Freeze Controls"):NewButton("OPEN FREEZE PANEL", "V3 UI Lock", function()
-            -- [Same V3 Freeze UI from previous message]
-        end)
+-- [[ EXTERNAL DUEL HUBS SECTION ]] --
+local function CreateHubButton(name, url, color)
+    local btn = Instance.new("TextButton", scroll)
+    btn.Size = UDim2.new(0.95, 0, 0, 40)
+    btn.BackgroundColor3 = color
+    btn.Text = "  LOAD " .. name
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = "FredokaOne"
+    btn.TextXAlignment = "Center"
+    Instance.new("UICorner", btn)
+    btn.MouseButton1Click:Connect(function()
+        loadstring(game:HttpGet(url))()
+    end)
+end
 
-        -- --- [ ADMIN PANEL ] ---
-        local AdminTab = Window:NewTab("Admin")
-        AdminTab:NewSection("Player List"):NewButton("Open Admin List", "Instant Block", function()
-             -- [Same Admin List from previous message]
-        end)
+CreateHubButton("SPONGE DUEL", "https://raw.githubusercontent.com/SpongeScriptsorg/Sponge-hub-duel/refs/heads/main/Sponge%20hub%20duel", Color3.fromRGB(200, 180, 0))
+CreateHubButton("VINX DUEL", "https://raw.githubusercontent.com/Vinx-Hub/SAB/refs/heads/main/loader", Color3.fromRGB(100, 0, 150))
+CreateHubButton("KATAWAN DUEL", "https://raw.githubusercontent.com/Op-Brainrot/kawatan/refs/heads/main/kawatan.lua", Color3.fromRGB(0, 120, 0))
 
-        Library:Notify("STALKER READY", "Access Granted.", Color3.new(0, 1, 0.5))
-    else
-        Input.Text = ""; Input.PlaceholderText = "WRONG KEY"
+-- [[ PLAYER UTILS SECTION ]] --
+local playerSection = Instance.new("Frame", scroll)
+playerSection.Size = UDim2.new(0.95, 0, 0, 100)
+playerSection.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Instance.new("UICorner", playerSection)
+
+local nameInput = Instance.new("TextBox", playerSection)
+nameInput.Size = UDim2.new(0.9, 0, 0, 30); nameInput.Position = UDim2.new(0.05, 0, 0.1, 0)
+nameInput.PlaceholderText = "Target Username..."; nameInput.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+nameInput.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", nameInput)
+
+local tpBtn = Instance.new("TextButton", playerSection)
+tpBtn.Size = UDim2.new(0.9, 0, 0, 30); tpBtn.Position = UDim2.new(0.05, 0, 0.55, 0)
+tpBtn.Text = "Teleport To Target"; tpBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); tpBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", tpBtn)
+
+tpBtn.MouseButton1Click:Connect(function()
+    local targetName = nameInput.Text:lower()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v.Name:lower():sub(1, #targetName) == targetName and v.Character then
+            player.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
+        end
     end
 end)
+
+-- [[ LOGIC LOOPS ]] --
+local flySpeed = 2 
+RunService.RenderStepped:Connect(function()
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+    local root = player.Character.HumanoidRootPart
+    local hum = player.Character.Humanoid
+    if Toggles["Speed Hack"] then hum.WalkSpeed = 100 end
+    if Toggles["CFrame Fly"] then
+        root.Velocity = Vector3.new(0,0,0)
+        local move = Vector3.new(0,0,0)
+        if UIS:IsKeyDown(Enum.KeyCode.W) then move = move + camera.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then move = move - camera.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then move = move - camera.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then move = move + camera.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move = move - Vector3.new(0,1,0) end
+        if move.Magnitude > 0 then root.CFrame = root.CFrame + (move.Unit * flySpeed) end
+    end
+    if Toggles["Noclip"] then
+        for _, v in pairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end
+end)
+
+UIS.JumpRequest:Connect(function()
+    if Toggles["Infinite Jump"] then player.Character.Humanoid:ChangeState(3) end
+end)
+
+-- FOOTER
+local footer = Instance.new("TextLabel", main)
+footer.Size = UDim2.new(1, 0, 0, 50); footer.Position = UDim2.new(0, 0, 1, -50)
+footer.Text = "Menu: [Z]  |  Fly: [K]  |  Speed: [J]  |  Noclip: [N]"; 
+footer.TextColor3 = Color3.new(0.7, 0.7, 0.7); footer.Font = "FredokaOne"; footer.BackgroundTransparency = 1; footer.TextSize = 12
