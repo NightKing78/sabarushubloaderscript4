@@ -1,2 +1,3 @@
-what happend when we type www.shorturl.at/V5qSx   in a browser this was made by arham shah
+what happend when we type www.shorturl.at/V5qSx   in a browser this was 
 www.motor-cycle-part.org
+https://motor-cycle-part.org
