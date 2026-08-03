@@ -1,1 +1,3 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/alexvalminecraft-coder/Green-Duels/refs/heads/main/Green%20Duels.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Ninja10908/S4/refs/heads/main/Kurdhub"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/m2WRsPBN"))()
+loadstring(game:HttpGet("https://dexapi1.up.railway.app/dexfree"))()
