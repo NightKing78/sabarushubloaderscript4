@@ -5,3 +5,4 @@ www.classlink.com.de
 https://freddyfazzballzharharhar.acphighschool.org/?
 https://fern.best
 www.themeathodforstudyistomakeitfun.b-cdn.net
+www.2v2.io
